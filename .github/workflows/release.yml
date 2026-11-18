@@ -1,0 +1,80 @@
+name: Build & Release APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build APK & Publish Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build Release APK
+        run: flutter build apk --release
+
+      - name: Prepare Release Files
+        run: |
+          mkdir -p release-files
+          cp build/app/outputs/flutter-apk/app-release.apk release-files/KBIHU-NU-KOTA-KEDIRI.apk
+          cp build/app/outputs/flutter-apk/app-release.apk release-files/app-release.apk
+
+      - name: Update 'latest' Git Tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -fa latest -m "Release APK Terbaru KBIHU NU KOTA KEDIRI"
+          git push -f origin latest
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KBIHU-NU-KOTA-KEDIRI-APK
+          path: release-files/KBIHU-NU-KOTA-KEDIRI.apk
+
+      - name: Publish to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: "KBIHU NU KOTA KEDIRI (Versi Terbaru)"
+          body: |
+            ## 📱 KBIHU NU KOTA KEDIRI - Unduhan APK Terbaru
+            
+            Aplikasi Walkie-Talkie (HT) & Bimbingan Doa Tawaf / Sa'i Haji & Umrah Offline dan Online.
+            
+            - **Nama File**: `KBIHU-NU-KOTA-KEDIRI.apk`
+            - **Status**: Otomatis di-build dan di-publish oleh GitHub Actions CI/CD.
+            - **Pembaruan Terakhir**: ${{ github.event.head_commit.message }}
+            
+            ---
+            *Link unduhan ini selalu mengarah ke versi terbaru untuk portofolio.*
+          files: |
+            release-files/KBIHU-NU-KOTA-KEDIRI.apk
+            release-files/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
