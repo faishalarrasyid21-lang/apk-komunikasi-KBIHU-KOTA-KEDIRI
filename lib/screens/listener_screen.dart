@@ -40,6 +40,8 @@ class _ListenerScreenState extends State<ListenerScreen> with SingleTickerProvid
   bool get _isOnlineMode => widget.appMode == AppMode.online;
 
   late AnimationController _pulseController;
+  double _fontScale = 1.0;
+  bool _isHighContrast = false;
 
   @override
   void initState() {
@@ -129,13 +131,31 @@ class _ListenerScreenState extends State<ListenerScreen> with SingleTickerProvid
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9F8),
+      backgroundColor: _isHighContrast ? Colors.white : const Color(0xFFF7F9F8),
       appBar: AppBar(
         title: Text(_isOnlineMode
             ? 'Jamaah • Kode: ${widget.roomId}'
             : 'Mode Jamaah (Mendengar)'),
-        backgroundColor: const Color(0xFF0D5C3A),
+        backgroundColor: _isHighContrast ? Colors.black : const Color(0xFF0D5C3A),
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: Icon(_isHighContrast ? Icons.wb_sunny : Icons.wb_sunny_outlined),
+            tooltip: _isHighContrast ? 'Mode Normal' : 'Mode Anti-Silau (Matahari Terik)',
+            onPressed: () {
+              setState(() => _isHighContrast = !_isHighContrast);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(_isHighContrast
+                      ? '☀️ Mode Anti-Silau Aktif (Kontras Maksimal di Luar Ruangan)'
+                      : 'Mode Layar Normal Aktif'),
+                  duration: const Duration(seconds: 2),
+                  backgroundColor: _isHighContrast ? Colors.black : const Color(0xFF0D5C3A),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child: Column(
@@ -143,7 +163,14 @@ class _ListenerScreenState extends State<ListenerScreen> with SingleTickerProvid
             // Status Bar Koneksi ke Ketua
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: _isLeaderOnline ? const Color(0xFFE8F5E9) : const Color(0xFFFFF3E0),
+              decoration: BoxDecoration(
+                color: _isHighContrast
+                    ? (_isLeaderOnline ? Colors.white : const Color(0xFFFFF9C4))
+                    : (_isLeaderOnline ? const Color(0xFFE8F5E9) : const Color(0xFFFFF3E0)),
+                border: _isHighContrast
+                    ? const Border(bottom: BorderSide(color: Colors.black, width: 2.0))
+                    : null,
+              ),
               child: Row(
                 children: [
                   Container(
@@ -151,7 +178,10 @@ class _ListenerScreenState extends State<ListenerScreen> with SingleTickerProvid
                     height: 12,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: _isLeaderOnline ? Colors.green.shade600 : Colors.orange.shade700,
+                      color: _isLeaderOnline
+                          ? (_isHighContrast ? Colors.green.shade900 : Colors.green.shade600)
+                          : (_isHighContrast ? Colors.orange.shade900 : Colors.orange.shade700),
+                      border: _isHighContrast ? Border.all(color: Colors.black, width: 1.5) : null,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -163,13 +193,15 @@ class _ListenerScreenState extends State<ListenerScreen> with SingleTickerProvid
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: _isLeaderOnline ? const Color(0xFF1B5E20) : const Color(0xFFE65100),
+                        color: _isHighContrast
+                            ? Colors.black
+                            : (_isLeaderOnline ? const Color(0xFF1B5E20) : const Color(0xFFE65100)),
                       ),
                     ),
                   ),
                   if (!_isLeaderOnline)
                     IconButton(
-                      icon: const Icon(Icons.sync, size: 18),
+                      icon: Icon(Icons.sync, size: 18, color: _isHighContrast ? Colors.black : null),
                       tooltip: 'Pindai Ulang',
                       onPressed: () => _udpService.sendClientJoin(),
                     ),
@@ -182,18 +214,29 @@ class _ListenerScreenState extends State<ListenerScreen> with SingleTickerProvid
                 margin: const EdgeInsets.all(12),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: Colors.amber.shade50,
+                  color: _isHighContrast ? Colors.white : Colors.amber.shade50,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.amber.shade300),
+                  border: Border.all(
+                    color: _isHighContrast ? Colors.black : Colors.amber.shade300,
+                    width: _isHighContrast ? 2.0 : 1.0,
+                  ),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.tips_and_updates_outlined, color: Colors.amber.shade900, size: 18),
+                    Icon(
+                      Icons.tips_and_updates_outlined,
+                      color: _isHighContrast ? Colors.black : Colors.amber.shade900,
+                      size: 18,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Tips Hotspot: Matikan Data Seluler di HP Jamaah dan pilih "Tetap Terhubung" agar Android tidak memutus jaringan lokal.',
-                        style: TextStyle(fontSize: 11, color: Colors.amber.shade900),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: _isHighContrast ? FontWeight.bold : FontWeight.normal,
+                          color: _isHighContrast ? Colors.black : Colors.amber.shade900,
+                        ),
                       ),
                     ),
                   ],
@@ -204,12 +247,21 @@ class _ListenerScreenState extends State<ListenerScreen> with SingleTickerProvid
             AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              color: _isLeaderSpeaking ? const Color(0xFF2E7D32) : Colors.grey.shade200,
+              decoration: BoxDecoration(
+                color: _isLeaderSpeaking
+                    ? (_isHighContrast ? Colors.black : const Color(0xFF2E7D32))
+                    : (_isHighContrast ? Colors.white : Colors.grey.shade200),
+                border: _isHighContrast
+                    ? const Border(bottom: BorderSide(color: Colors.black, width: 2.0))
+                    : null,
+              ),
               child: Row(
                 children: [
                   Icon(
                     _isLeaderSpeaking ? Icons.volume_up_rounded : Icons.headphones_outlined,
-                    color: _isLeaderSpeaking ? Colors.white : Colors.black54,
+                    color: _isLeaderSpeaking
+                        ? Colors.white
+                        : (_isHighContrast ? Colors.black : Colors.black54),
                     size: 28,
                   ),
                   const SizedBox(width: 14),
@@ -223,7 +275,9 @@ class _ListenerScreenState extends State<ListenerScreen> with SingleTickerProvid
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1,
-                            color: _isLeaderSpeaking ? Colors.white : Colors.black87,
+                            color: _isLeaderSpeaking
+                                ? Colors.white
+                                : (_isHighContrast ? Colors.black : Colors.black87),
                           ),
                         ),
                         Text(
@@ -232,7 +286,10 @@ class _ListenerScreenState extends State<ListenerScreen> with SingleTickerProvid
                               : 'Pasang earphone agar instruksi terdengar jelas',
                           style: TextStyle(
                             fontSize: 11,
-                            color: _isLeaderSpeaking ? Colors.white70 : Colors.black54,
+                            fontWeight: _isHighContrast ? FontWeight.w600 : FontWeight.normal,
+                            color: _isLeaderSpeaking
+                                ? Colors.white70
+                                : (_isHighContrast ? Colors.black87 : Colors.black54),
                           ),
                         ),
                       ],
@@ -246,6 +303,7 @@ class _ListenerScreenState extends State<ListenerScreen> with SingleTickerProvid
                         decoration: BoxDecoration(
                           color: Colors.redAccent,
                           borderRadius: BorderRadius.circular(6),
+                          border: _isHighContrast ? Border.all(color: Colors.white, width: 1.5) : null,
                         ),
                         child: const Text(
                           'LIVE',
@@ -274,7 +332,7 @@ class _ListenerScreenState extends State<ListenerScreen> with SingleTickerProvid
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF0D5C3A),
+                            color: _isHighContrast ? Colors.black : const Color(0xFF0D5C3A),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -288,9 +346,13 @@ class _ListenerScreenState extends State<ListenerScreen> with SingleTickerProvid
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Text(
+                        Text(
                           'Tahapan Saat Ini',
-                          style: TextStyle(fontSize: 12, color: Colors.black45),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: _isHighContrast ? FontWeight.bold : FontWeight.normal,
+                            color: _isHighContrast ? Colors.black : Colors.black45,
+                          ),
                         ),
                       ],
                     ),
@@ -299,10 +361,10 @@ class _ListenerScreenState extends State<ListenerScreen> with SingleTickerProvid
                     // Judul Tahapan
                     Text(
                       _currentStage.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: _isHighContrast ? Colors.black : Colors.black87,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -311,21 +373,26 @@ class _ListenerScreenState extends State<ListenerScreen> with SingleTickerProvid
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE8F5E9),
+                        color: _isHighContrast ? Colors.white : const Color(0xFFE8F5E9),
                         borderRadius: BorderRadius.circular(10),
+                        border: _isHighContrast ? Border.all(color: Colors.black, width: 2.0) : null,
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.info_outline, color: Color(0xFF0D5C3A), size: 20),
+                          Icon(
+                            Icons.info_outline,
+                            color: _isHighContrast ? Colors.black : const Color(0xFF0D5C3A),
+                            size: 20,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               _currentStage.instruction,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
-                                color: Color(0xFF1B5E20),
-                                fontWeight: FontWeight.w500,
+                                color: _isHighContrast ? Colors.black : const Color(0xFF1B5E20),
+                                fontWeight: _isHighContrast ? FontWeight.bold : FontWeight.w500,
                               ),
                             ),
                           ),
@@ -333,7 +400,151 @@ class _ListenerScreenState extends State<ListenerScreen> with SingleTickerProvid
                       ),
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
+
+                    // Toolbar Pengatur Ukuran Font Doa (Ramah Jamaah Lansia)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _isHighContrast ? Colors.black : Colors.grey.shade300,
+                          width: _isHighContrast ? 2.0 : 1.0,
+                        ),
+                        boxShadow: _isHighContrast
+                            ? []
+                            : [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.03),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.format_size,
+                            size: 20,
+                            color: _isHighContrast ? Colors.black : const Color(0xFF0D5C3A),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Ukuran Huruf Doa',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: _isHighContrast ? Colors.black : Colors.black87,
+                                  ),
+                                ),
+                                Text(
+                                  'Ramah Jamaah Lansia',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: _isHighContrast ? Colors.black87 : Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Tombol Perkecil (A-)
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: _fontScale > 0.85
+                                  ? () => setState(() => _fontScale = (_fontScale - 0.15).clamp(0.85, 1.75))
+                                  : null,
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: _isHighContrast
+                                      ? (_fontScale <= 0.85 ? Colors.grey.shade200 : Colors.black)
+                                      : (_fontScale <= 0.85 ? Colors.grey.shade100 : const Color(0xFFE8F5E9)),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: _isHighContrast ? Border.all(color: Colors.black) : null,
+                                ),
+                                child: Text(
+                                  'A -',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                    color: _isHighContrast
+                                        ? (_fontScale <= 0.85 ? Colors.grey : Colors.white)
+                                        : (_fontScale <= 0.85 ? Colors.grey : const Color(0xFF0D5C3A)),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          // Indikator Persentase (Tap untuk Reset ke 100%)
+                          Tooltip(
+                            message: 'Ketuk untuk kembali ke 100%',
+                            child: InkWell(
+                              onTap: () => setState(() => _fontScale = 1.0),
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: _isHighContrast ? Colors.white : Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: _isHighContrast ? Colors.black : Colors.grey.shade300,
+                                  ),
+                                ),
+                                child: Text(
+                                  '${(_fontScale * 100).round()}%',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: _isHighContrast ? Colors.black : Colors.black87,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          // Tombol Perbesar (A+)
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: _fontScale < 1.75
+                                  ? () => setState(() => _fontScale = (_fontScale + 0.15).clamp(0.85, 1.75))
+                                  : null,
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: _isHighContrast
+                                      ? (_fontScale >= 1.75 ? Colors.grey.shade200 : Colors.black)
+                                      : (_fontScale >= 1.75 ? Colors.grey.shade100 : const Color(0xFF0D5C3A)),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: _isHighContrast ? Border.all(color: Colors.black) : null,
+                                ),
+                                child: Text(
+                                  'A +',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: _isHighContrast
+                                        ? (_fontScale >= 1.75 ? Colors.grey : Colors.white)
+                                        : (_fontScale >= 1.75 ? Colors.grey : Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 14),
 
                     // Kotak Teks Doa Bahasa Arab
                     if (_currentStage.arabicText != null) ...[
@@ -342,40 +553,55 @@ class _ListenerScreenState extends State<ListenerScreen> with SingleTickerProvid
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFF0D5C3A).withValues(alpha: 0.3)),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.04),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
+                          border: Border.all(
+                            color: _isHighContrast
+                                ? Colors.black
+                                : const Color(0xFF0D5C3A).withValues(alpha: 0.3),
+                            width: _isHighContrast ? 2.5 : 1.0,
+                          ),
+                          boxShadow: _isHighContrast
+                              ? []
+                              : [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.04),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            const Row(
+                            Row(
                               children: [
-                                Icon(Icons.menu_book_rounded, color: Color(0xFF0D5C3A), size: 18),
-                                SizedBox(width: 6),
+                                Icon(
+                                  Icons.menu_book_rounded,
+                                  color: _isHighContrast ? Colors.black : const Color(0xFF0D5C3A),
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 6),
                                 Text(
                                   'Bacaan Doa:',
                                   style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF0D5C3A),
+                                    color: _isHighContrast ? Colors.black : const Color(0xFF0D5C3A),
                                   ),
                                 ),
                               ],
                             ),
-                            const Divider(height: 24),
+                            Divider(
+                              height: 24,
+                              color: _isHighContrast ? Colors.black : null,
+                              thickness: _isHighContrast ? 1.5 : null,
+                            ),
                             Text(
                               _currentStage.arabicText!,
                               textAlign: TextAlign.right,
-                              style: const TextStyle(
-                                fontSize: 26,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF0D5C3A),
+                              style: TextStyle(
+                                fontSize: 26 * _fontScale,
+                                fontWeight: _isHighContrast ? FontWeight.w900 : FontWeight.bold,
+                                color: _isHighContrast ? Colors.black : const Color(0xFF0D5C3A),
                                 height: 1.8,
                               ),
                             ),
@@ -383,10 +609,11 @@ class _ListenerScreenState extends State<ListenerScreen> with SingleTickerProvid
                               const SizedBox(height: 16),
                               Text(
                                 _currentStage.latinText!,
-                                style: const TextStyle(
-                                  fontSize: 14,
+                                style: TextStyle(
+                                  fontSize: 14 * _fontScale,
                                   fontStyle: FontStyle.italic,
-                                  color: Colors.black87,
+                                  fontWeight: _isHighContrast ? FontWeight.bold : FontWeight.normal,
+                                  color: _isHighContrast ? Colors.black : Colors.black87,
                                   height: 1.4,
                                 ),
                               ),
@@ -395,9 +622,10 @@ class _ListenerScreenState extends State<ListenerScreen> with SingleTickerProvid
                               const SizedBox(height: 12),
                               Text(
                                 'Artinya:\n"${_currentStage.translation!}"',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.black54,
+                                style: TextStyle(
+                                  fontSize: 13 * _fontScale,
+                                  fontWeight: _isHighContrast ? FontWeight.w700 : FontWeight.normal,
+                                  color: _isHighContrast ? const Color(0xFF111111) : Colors.black54,
                                   height: 1.4,
                                 ),
                               ),
@@ -413,18 +641,29 @@ class _ListenerScreenState extends State<ListenerScreen> with SingleTickerProvid
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.amber.shade50,
+                        color: _isHighContrast ? Colors.white : Colors.amber.shade50,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.amber.shade300),
+                        border: Border.all(
+                          color: _isHighContrast ? Colors.black : Colors.amber.shade300,
+                          width: _isHighContrast ? 2.0 : 1.0,
+                        ),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
-                          Icon(Icons.headset, color: Colors.amber, size: 24),
-                          SizedBox(width: 12),
+                          Icon(
+                            Icons.headset,
+                            color: _isHighContrast ? Colors.black : Colors.amber,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               'Gunakan earphone agar tetap mendengar aba-aba ketua dengan jelas di keramaian.',
-                              style: TextStyle(fontSize: 12, color: Colors.brown),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: _isHighContrast ? FontWeight.bold : FontWeight.normal,
+                                color: _isHighContrast ? Colors.black : Colors.brown,
+                              ),
                             ),
                           ),
                         ],

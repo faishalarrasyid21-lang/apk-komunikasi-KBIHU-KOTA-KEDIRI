@@ -17,7 +17,7 @@ class HajjWalkieTalkieApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'KBIHU NU Kediri',
+      title: 'KBIHU NU KOTA KEDIRI',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,

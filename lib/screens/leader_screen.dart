@@ -29,6 +29,8 @@ class _LeaderScreenState extends State<LeaderScreen> {
   bool _isMicOn = false;
   int _connectedCount = 0;
   bool _isOnlineConnected = false;
+  double _fontScale = 1.0;
+  bool _isHighContrast = false;
 
   StreamSubscription<int>? _clientCountSub;
   StreamSubscription<bool>? _onlineConnectedSub;
@@ -193,14 +195,30 @@ class _LeaderScreenState extends State<LeaderScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9F8),
+      backgroundColor: _isHighContrast ? Colors.white : const Color(0xFFF7F9F8),
       appBar: AppBar(
         title: Text(_isOnlineMode
             ? 'Ketua • Kode: ${widget.roomId}'
             : 'Mode Ketua (Pemancar)'),
-        backgroundColor: const Color(0xFF0D5C3A),
+        backgroundColor: _isHighContrast ? Colors.black : const Color(0xFF0D5C3A),
         foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            icon: Icon(_isHighContrast ? Icons.wb_sunny : Icons.wb_sunny_outlined),
+            tooltip: _isHighContrast ? 'Mode Normal' : 'Mode Anti-Silau (Matahari Terik)',
+            onPressed: () {
+              setState(() => _isHighContrast = !_isHighContrast);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(_isHighContrast
+                      ? '☀️ Mode Anti-Silau Aktif (Kontras Maksimal di Luar Ruangan)'
+                      : 'Mode Layar Normal Aktif'),
+                  duration: const Duration(seconds: 2),
+                  backgroundColor: _isHighContrast ? Colors.black : const Color(0xFF0D5C3A),
+                ),
+              );
+            },
+          ),
           if (_isOnlineMode)
             Padding(
               padding: const EdgeInsets.only(right: 4),
@@ -228,12 +246,21 @@ class _LeaderScreenState extends State<LeaderScreen> {
             // Banner Status Hotspot & Jumlah Jamaah
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              color: _connectedCount > 0 ? const Color(0xFFE8F5E9) : const Color(0xFFFFF3E0),
+              decoration: BoxDecoration(
+                color: _isHighContrast
+                    ? (_connectedCount > 0 ? Colors.white : const Color(0xFFFFF9C4))
+                    : (_connectedCount > 0 ? const Color(0xFFE8F5E9) : const Color(0xFFFFF3E0)),
+                border: _isHighContrast
+                    ? const Border(bottom: BorderSide(color: Colors.black, width: 2.0))
+                    : null,
+              ),
               child: Row(
                 children: [
                   Icon(
                     Icons.wifi_tethering,
-                    color: _connectedCount > 0 ? const Color(0xFF2E7D32) : Colors.orange.shade800,
+                    color: _isHighContrast
+                        ? Colors.black
+                        : (_connectedCount > 0 ? const Color(0xFF2E7D32) : Colors.orange.shade800),
                     size: 20,
                   ),
                   const SizedBox(width: 8),
@@ -245,7 +272,9 @@ class _LeaderScreenState extends State<LeaderScreen> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: _connectedCount > 0 ? const Color(0xFF1B5E20) : Colors.orange.shade900,
+                        color: _isHighContrast
+                            ? Colors.black
+                            : (_connectedCount > 0 ? const Color(0xFF1B5E20) : Colors.orange.shade900),
                       ),
                     ),
                   ),
@@ -253,7 +282,7 @@ class _LeaderScreenState extends State<LeaderScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0D5C3A),
+                        color: _isHighContrast ? Colors.black : const Color(0xFF0D5C3A),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
@@ -275,20 +304,155 @@ class _LeaderScreenState extends State<LeaderScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    // Toolbar Pengatur Ukuran Font Doa
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 14),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _isHighContrast ? Colors.black : Colors.grey.shade300,
+                          width: _isHighContrast ? 2.0 : 1.0,
+                        ),
+                        boxShadow: _isHighContrast
+                            ? []
+                            : [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.03),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.format_size,
+                            size: 20,
+                            color: _isHighContrast ? Colors.black : const Color(0xFF0D5C3A),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Ukuran Teks Doa',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: _isHighContrast ? Colors.black : Colors.black87,
+                              ),
+                            ),
+                          ),
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: _fontScale > 0.85
+                                  ? () => setState(() => _fontScale = (_fontScale - 0.15).clamp(0.85, 1.75))
+                                  : null,
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: _isHighContrast
+                                      ? (_fontScale <= 0.85 ? Colors.grey.shade200 : Colors.black)
+                                      : (_fontScale <= 0.85 ? Colors.grey.shade100 : const Color(0xFFE8F5E9)),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: _isHighContrast ? Border.all(color: Colors.black) : null,
+                                ),
+                                child: Text(
+                                  'A -',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                    color: _isHighContrast
+                                        ? (_fontScale <= 0.85 ? Colors.grey : Colors.white)
+                                        : (_fontScale <= 0.85 ? Colors.grey : const Color(0xFF0D5C3A)),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Tooltip(
+                            message: 'Ketuk untuk kembali ke 100%',
+                            child: InkWell(
+                              onTap: () => setState(() => _fontScale = 1.0),
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: _isHighContrast ? Colors.white : Colors.grey.shade100,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: _isHighContrast ? Colors.black : Colors.grey.shade300,
+                                  ),
+                                ),
+                                child: Text(
+                                  '${(_fontScale * 100).round()}%',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: _isHighContrast ? Colors.black : Colors.black87,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: _fontScale < 1.75
+                                  ? () => setState(() => _fontScale = (_fontScale + 0.15).clamp(0.85, 1.75))
+                                  : null,
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: _isHighContrast
+                                      ? (_fontScale >= 1.75 ? Colors.grey.shade200 : Colors.black)
+                                      : (_fontScale >= 1.75 ? Colors.grey.shade100 : const Color(0xFF0D5C3A)),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: _isHighContrast ? Border.all(color: Colors.black) : null,
+                                ),
+                                child: Text(
+                                  'A +',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: _isHighContrast
+                                        ? (_fontScale >= 1.75 ? Colors.grey : Colors.white)
+                                        : (_fontScale >= 1.75 ? Colors.grey : Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
                     // Kartu Tahapan Saat Ini
                     Container(
                       padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFF0D5C3A).withValues(alpha: 0.3)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.04),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                        border: Border.all(
+                          color: _isHighContrast
+                              ? Colors.black
+                              : const Color(0xFF0D5C3A).withValues(alpha: 0.3),
+                          width: _isHighContrast ? 2.5 : 1.0,
+                        ),
+                        boxShadow: _isHighContrast
+                            ? []
+                            : [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.04),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -299,21 +463,23 @@ class _LeaderScreenState extends State<LeaderScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF0D5C3A).withValues(alpha: 0.1),
+                                  color: _isHighContrast
+                                      ? Colors.black
+                                      : const Color(0xFF0D5C3A).withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
                                   _currentStage.category.toUpperCase(),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF0D5C3A),
+                                    color: _isHighContrast ? Colors.white : const Color(0xFF0D5C3A),
                                   ),
                                 ),
                               ),
                               ElevatedButton.icon(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF0D5C3A),
+                                  backgroundColor: _isHighContrast ? Colors.black : const Color(0xFF0D5C3A),
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -327,16 +493,20 @@ class _LeaderScreenState extends State<LeaderScreen> {
                           const SizedBox(height: 12),
                           Text(
                             _currentStage.title,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              color: _isHighContrast ? Colors.black : Colors.black87,
                             ),
                           ),
                           const SizedBox(height: 6),
                           Text(
                             _currentStage.instruction,
-                            style: const TextStyle(fontSize: 13, color: Colors.black54),
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: _isHighContrast ? FontWeight.bold : FontWeight.normal,
+                              color: _isHighContrast ? Colors.black87 : Colors.black54,
+                            ),
                           ),
                           if (_currentStage.arabicText != null) ...[
                             const SizedBox(height: 14),
@@ -344,9 +514,12 @@ class _LeaderScreenState extends State<LeaderScreen> {
                               width: double.infinity,
                               padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF9FBF9),
+                                color: _isHighContrast ? Colors.white : const Color(0xFFF9FBF9),
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: Colors.grey.shade200),
+                                border: Border.all(
+                                  color: _isHighContrast ? Colors.black : Colors.grey.shade200,
+                                  width: _isHighContrast ? 1.5 : 1.0,
+                                ),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -354,10 +527,10 @@ class _LeaderScreenState extends State<LeaderScreen> {
                                   Text(
                                     _currentStage.arabicText!,
                                     textAlign: TextAlign.right,
-                                    style: const TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF0D5C3A),
+                                    style: TextStyle(
+                                      fontSize: 22 * _fontScale,
+                                      fontWeight: _isHighContrast ? FontWeight.w900 : FontWeight.bold,
+                                      color: _isHighContrast ? Colors.black : const Color(0xFF0D5C3A),
                                       height: 1.6,
                                     ),
                                   ),
@@ -366,10 +539,11 @@ class _LeaderScreenState extends State<LeaderScreen> {
                                     Text(
                                       _currentStage.latinText!,
                                       textAlign: TextAlign.left,
-                                      style: const TextStyle(
-                                        fontSize: 12,
+                                      style: TextStyle(
+                                        fontSize: 12 * _fontScale,
                                         fontStyle: FontStyle.italic,
-                                        color: Colors.black54,
+                                        fontWeight: _isHighContrast ? FontWeight.bold : FontWeight.normal,
+                                        color: _isHighContrast ? Colors.black : Colors.black54,
                                       ),
                                     ),
                                   ],
